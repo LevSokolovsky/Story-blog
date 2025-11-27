@@ -1,10 +1,48 @@
 import { signup, login, guestLogin } from './api.js';
 
 const view = document.getElementById('view');
+const appRoot = document.getElementById('app');
 const navButtons = Array.from(document.querySelectorAll('[data-route]'));
 const navTrigger = document.getElementById('navTrigger');
 const topNav = document.getElementById('topNav');
 const authChip = document.getElementById('authChip');
+const brandPanel = document.querySelector('.brand-panel');
+
+const restrictedRoutes = ['explore', 'drafts', 'profile'];
+
+const writingBenefits = [
+  'Turn fleeting thoughts into a searchable library of ideas.',
+  'Share consistent updates with the people who care most.',
+  'Build a portfolio of writing samples you can proudly link anywhere.',
+  'Reflect on your growth with lightweight drafting and publishing habits.',
+];
+
+const sampleFollowedPosts = [
+  {
+    id: 'p1',
+    title: 'How a 10-minute writing ritual unlocked a year of publishing',
+    author: 'Lina Morales',
+    summary: 'A practical, repeatable cadence for keeping momentum without feeling rushed.',
+    time: '6 min read',
+    tag: 'Writing craft',
+  },
+  {
+    id: 'p2',
+    title: 'Finding your narrative voice without losing authenticity',
+    author: 'Dex Harper',
+    summary: 'Exercises to surface tone, rhythm, and a perspective readers remember.',
+    time: '5 min read',
+    tag: 'Voice',
+  },
+  {
+    id: 'p3',
+    title: 'The simple research system behind my story ideas',
+    author: 'Samira Bloom',
+    summary: 'Capture notes, connect themes, and turn sparks into outlines you can draft anywhere.',
+    time: '7 min read',
+    tag: 'Process',
+  },
+];
 
 const catImage = 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=900&q=80';
 const avatarChoices = [
@@ -20,6 +58,7 @@ let state = {
   route: 'home',
   message: '',
   messageType: 'info',
+  following: JSON.parse(localStorage.getItem('story_following') || '[]'),
 };
 
 function setState(updates) {
@@ -33,10 +72,19 @@ function setState(updates) {
       localStorage.removeItem('story_token');
     }
   }
+  if (updates.following !== undefined) {
+    localStorage.setItem('story_following', JSON.stringify(state.following));
+  }
   render();
 }
 
 function setRoute(route) {
+  const needsAuth = restrictedRoutes.includes(route);
+  if (needsAuth && !state.user) {
+    setState({ route: 'home', message: 'Sign in to access writing areas like Explore and Drafts.', messageType: 'info' });
+    window.history.pushState({ route: 'home' }, '', '#home');
+    return;
+  }
   setState({ route, message: '' });
   window.history.pushState({ route }, '', `#${route}`);
 }
@@ -53,6 +101,13 @@ navButtons.forEach((btn) => btn.addEventListener('click', handleNavClick));
 navTrigger.addEventListener('click', () => {
   topNav.classList.toggle('open');
 });
+
+function updateNavigationVisibility() {
+  navButtons.forEach((btn) => {
+    const isRestricted = restrictedRoutes.includes(btn.dataset.route);
+    btn.classList.toggle('hidden', isRestricted && !state.user);
+  });
+}
 
 window.addEventListener('popstate', (event) => {
   const route = event.state?.route || 'home';
@@ -77,37 +132,83 @@ function renderAuthChip() {
   }
 }
 
-function renderHome() {
-  view.innerHTML = `
-    <div class="hero">
-      <div>
-        <p class="helper-text">Welcome to Story</p>
-        <h1>Shape thoughtful blogs with calm, secure sign-in.</h1>
-        <p class="helper-text">Create an account, pick a friendly avatar, and explore as a guest before you commit.</p>
-        <div class="actions">
-          <button class="primary-btn" id="startWriting">Get started</button>
-          <button class="secondary-btn" id="exploreBtn">Browse drafts</button>
-        </div>
+function renderPostCard(post) {
+  return `
+    <article class="post-card" aria-label="${post.title}">
+      <div class="post-meta">
+        <span class="pill">${post.tag}</span>
+        <span class="helper-text">${post.time}</span>
       </div>
-      <div class="card">
+      <h3>${post.title}</h3>
+      <p class="helper-text">${post.summary}</p>
+      <div class="post-footer">
+        <span class="author">${post.author}</span>
+        <button class="link-btn" type="button">Open</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderHome() {
+  if (state.user) {
+    const hasFollowing = (state.following || []).length > 0;
+    const feed = hasFollowing ? sampleFollowedPosts : [];
+    view.innerHTML = `
+      <div class="feed">
         <div class="section-header">
           <div>
-            <h2>Security first</h2>
-            <p class="helper-text">Passwords are hashed with PBKDF2 + unique salt, and tokens are signed server-side.</p>
+            <p class="helper-text">Welcome back, ${state.user.name}.</p>
+            <h2>Your home feed</h2>
+            <p class="helper-text">See updates from people you follow. We keep it focused so you can read quickly on any device.</p>
           </div>
-          <span class="success">Live demo ready</span>
+          <button class="secondary-btn" data-action="open-explore">Search writers</button>
         </div>
-        <ul class="helper-text">
-          <li>Full signup & login with avatar selection</li>
-          <li>Guest access for quick previews</li>
-          <li>Modern light-green & light-blue palette</li>
-          <li>API served locally for Netlify-friendly deployment</li>
-        </ul>
+        ${hasFollowing
+          ? `<div class="feed-grid">${feed.map(renderPostCard).join('')}</div>`
+          : `<div class="empty-feed card">
+              <h3>No follows yet</h3>
+              <p class="helper-text">Follow a few writers to see their posts here. Start in Explore to discover topics you love.</p>
+              <div class="actions">
+                <button class="primary-btn" data-action="open-explore">Go to Explore</button>
+                <button class="secondary-btn" type="button" data-action="open-explore">Search stories</button>
+              </div>
+            </div>`}
+      </div>
+    `;
+
+    view.querySelectorAll('[data-action="open-explore"]').forEach((btn) => {
+      btn.onclick = () => setRoute('explore');
+    });
+    return;
+  }
+
+  const benefitsList = writingBenefits.map((item) => `<li>${item}</li>`).join('');
+
+  view.innerHTML = `
+    <div class="hero">
+      <div class="hero-intro">
+        <p class="helper-text">Welcome to Story</p>
+        <h1>Write the posts that move your ideas forward.</h1>
+        <p class="helper-text">Story keeps drafting calm, publishing fast, and reading joyful on mobile or desktop.</p>
+        <div class="actions">
+          <button class="primary-btn" id="startWriting">Start your blog</button>
+          <button class="secondary-btn" id="readSamples">See how it looks</button>
+        </div>
+      </div>
+      <div class="card value-card">
+        <div class="section-header">
+          <div>
+            <h2>Why blogging here feels great</h2>
+            <p class="helper-text">Capture drafts, publish confidently, and grow an archive you can revisit anywhere.</p>
+          </div>
+          <span class="pill">Mobile friendly</span>
+        </div>
+        <ul class="benefits-list">${benefitsList}</ul>
       </div>
     </div>
   `;
   document.getElementById('startWriting').onclick = () => setRoute('signup');
-  document.getElementById('exploreBtn').onclick = () => setRoute('explore');
+  document.getElementById('readSamples').onclick = () => setRoute('login');
 }
 
 function renderAuthForm(type) {
@@ -118,11 +219,19 @@ function renderAuthForm(type) {
     ? `<div class="card">
         <div class="section-header">
           <h3>Choose an avatar</h3>
-          <p class="helper-text">Pick a ready-made avatar or paste an image URL.</p>
+          <p class="helper-text">Pick a ready-made avatar, paste a link, or upload a photo from your device.</p>
+        </div>
+        <div class="upload-block">
+          <label class="file-label">
+            Upload from your device
+            <input class="input" type="file" id="avatarFile" accept="image/*" />
+          </label>
+          <p class="helper-text" id="avatarHint">Images under 500KB keep things speedy.</p>
+          <div id="avatarPreview" class="avatar-preview muted-panel">No image selected yet.</div>
         </div>
         <div class="avatar-grid" id="avatarGrid"></div>
         <div class="form-grid">
-          <label for="avatarUrl">Custom image link (optional)</label>
+          <label for="avatarUrl">Image link or uploaded image</label>
           <input class="input" id="avatarUrl" name="avatar" placeholder="https://..." />
         </div>
       </div>`
@@ -167,11 +276,58 @@ function renderAuthForm(type) {
       });
       grid.appendChild(option);
     });
+
+    bindAvatarTools();
   }
 
   document.getElementById('switchAuth').onclick = () => setRoute(isSignup ? 'login' : 'signup');
   document.getElementById('guestBtn').onclick = handleGuestLogin;
   document.getElementById('authForm').onsubmit = (event) => handleAuthSubmit(event, isSignup);
+}
+
+function bindAvatarTools() {
+  const avatarUrlInput = document.getElementById('avatarUrl');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const avatarFile = document.getElementById('avatarFile');
+  const avatarHint = document.getElementById('avatarHint');
+
+  const updatePreview = (value) => {
+    if (!avatarPreview) return;
+    if (value) {
+      avatarPreview.innerHTML = `<img src="${value}" alt="Avatar preview" />`;
+    } else {
+      avatarPreview.textContent = 'No image selected yet.';
+    }
+  };
+
+  avatarUrlInput?.addEventListener('input', () => updatePreview(avatarUrlInput.value.trim()));
+
+  avatarFile?.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setState({ message: 'Please upload an image file.', messageType: 'error' });
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      setState({ message: 'Please choose an image under 500KB.', messageType: 'error' });
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      avatarUrlInput.value = reader.result;
+      updatePreview(reader.result);
+      if (avatarHint) {
+        avatarHint.textContent = 'Uploaded securely from your device.';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  updatePreview(avatarUrlInput?.value);
 }
 
 async function handleGuestLogin() {
@@ -195,6 +351,9 @@ async function handleAuthSubmit(event, isSignup) {
   }
 
   try {
+    payload.name = (payload.name || '').trim();
+    payload.email = (payload.email || '').trim();
+    payload.avatar = (payload.avatar || '').trim();
     const apiCall = isSignup ? signup : login;
     const data = await apiCall({
       name: payload.name,
@@ -225,7 +384,21 @@ function render() {
     btn.classList.toggle('active', isActive);
   });
 
+  updateNavigationVisibility();
+  if (brandPanel) {
+    brandPanel.classList.toggle('is-hidden', Boolean(state.user));
+  }
+  if (appRoot) {
+    appRoot.classList.toggle('single-column', Boolean(state.user));
+  }
+  topNav.classList.remove('open');
+
   renderAuthChip();
+
+  if (!state.user && restrictedRoutes.includes(state.route)) {
+    setState({ route: 'home' });
+    return;
+  }
 
   switch (state.route) {
     case 'login':

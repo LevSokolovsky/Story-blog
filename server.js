@@ -10,6 +10,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const USERS_PATH = path.join(DATA_DIR, 'users.json');
 const STATIC_DIR = path.join(__dirname, 'public');
 const TOKEN_SECRET = process.env.STORY_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
+const BODY_LIMIT = 2.5 * 1024 * 1024; // 2.5MB
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -78,7 +79,7 @@ function parseBody(req) {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk.toString();
-      if (body.length > 1e6) {
+      if (body.length > BODY_LIMIT) {
         req.connection.destroy();
         reject(new Error('Request too large'));
       }
@@ -116,20 +117,56 @@ function serveStatic(res, filePath) {
 async function handleSignup(req, res) {
   try {
     const { name, email, password, avatar } = await parseBody(req);
-    if (!name || !email || !password) {
+    const safeEmail = String(email || '').toLowerCase().trim();
+    const safeName = String(name || '').trim();
+    const safeAvatar = typeof avatar === 'string' ? avatar.trim() : '';
+
+    if (!safeName || !safeEmail || !password) {
       return sendJson(res, 400, { message: 'Name, email, and password are required.' });
     }
-    const safeEmail = String(email).toLowerCase();
+
+    if (safeName.length < 2 || safeName.length > 50) {
+      return sendJson(res, 400, { message: 'Name must be between 2 and 50 characters.' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeEmail)) {
+      return sendJson(res, 400, { message: 'Please provide a valid email address.' });
+    }
+
+    if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+      return sendJson(res, 400, { message: 'Password must be between 8 and 128 characters.' });
+    }
+
+    if (safeAvatar && safeAvatar.length > 500000) {
+      return sendJson(res, 413, { message: 'Avatar is too large. Please upload an image under 500KB.' });
+    }
+
+    if (
+      safeAvatar &&
+      !safeAvatar.startsWith('http') &&
+      !safeAvatar.startsWith('data:image/png;base64,') &&
+      !safeAvatar.startsWith('data:image/jpeg;base64,') &&
+      !safeAvatar.startsWith('data:image/jpg;base64,') &&
+      !safeAvatar.startsWith('data:image/webp;base64,')
+    ) {
+      return sendJson(res, 400, { message: 'Avatar must be a valid image URL or data URL.' });
+    }
+
     const users = loadUsers();
     if (users.some((u) => u.email === safeEmail)) {
       return sendJson(res, 409, { message: 'An account with this email already exists.' });
     }
+
+    if (users.some((u) => u.name.toLowerCase() === safeName.toLowerCase())) {
+      return sendJson(res, 409, { message: 'This username is already taken. Please choose another.' });
+    }
+
     const passwordRecord = hashPassword(password);
     const newUser = {
       id: generateId(),
-      name: String(name).trim(),
+      name: safeName,
       email: safeEmail,
-      avatar: avatar || '',
+      avatar: safeAvatar,
       password: passwordRecord,
       createdAt: new Date().toISOString(),
     };
@@ -149,11 +186,12 @@ async function handleSignup(req, res) {
 async function handleLogin(req, res) {
   try {
     const { email, password } = await parseBody(req);
-    if (!email || !password) {
+    const safeEmail = String(email || '').toLowerCase().trim();
+    if (!safeEmail || typeof password !== 'string' || !password) {
       return sendJson(res, 400, { message: 'Email and password are required.' });
     }
     const users = loadUsers();
-    const user = users.find((u) => u.email === String(email).toLowerCase());
+    const user = users.find((u) => u.email === safeEmail);
     if (!user || !verifyPassword(password, user.password)) {
       return sendJson(res, 401, { message: 'Invalid credentials.' });
     }
