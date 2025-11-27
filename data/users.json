@@ -1,0 +1,13 @@
+[
+  {
+    "id": "12765339-f50f-480e-99ab-ddca9dd5023b",
+    "name": "Test User",
+    "email": "test@example.com",
+    "avatar": "https://example.com/pic.png",
+    "password": {
+      "salt": "4d2c1fd7e6f94c6469444c1e4511d209",
+      "hash": "1085becde7ed56b1a47a026f2667509e41dd12b54d915a392e461725e0bee8e0c4640dcdfadd603459b959fe8b4e34801a249d5b34023ae6c94f5e505d81d43b"
+    },
+    "createdAt": "2025-11-26T19:21:44.302Z"
+  }
+]
