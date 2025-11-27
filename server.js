@@ -12,6 +12,12 @@ const STATIC_DIR = path.join(__dirname, 'public');
 const TOKEN_SECRET = process.env.STORY_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
 const BODY_LIMIT = 2.5 * 1024 * 1024; // 2.5MB
 
+function createHttpError(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -77,19 +83,32 @@ function signToken(payload) {
 function parseBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
+    let rejected = false;
+
+    const rejectOnce = (error) => {
+      if (rejected) return;
+      rejected = true;
+      req.removeAllListeners('data');
+      req.removeAllListeners('end');
+      req.on('data', () => {});
+      req.resume();
+      reject(error);
+    };
+
     req.on('data', (chunk) => {
+      if (rejected) return;
       body += chunk.toString();
       if (body.length > BODY_LIMIT) {
-        req.connection.destroy();
-        reject(new Error('Request too large'));
+        rejectOnce(createHttpError(413, 'Request too large. Please keep requests under 2.5MB.'));
       }
     });
     req.on('end', () => {
+      if (rejected) return;
       if (!body) return resolve({});
       try {
         resolve(JSON.parse(body));
       } catch (error) {
-        reject(new Error('Invalid JSON body'));
+        rejectOnce(createHttpError(400, 'Invalid JSON body. Please send valid JSON.'));
       }
     });
   });
@@ -179,7 +198,8 @@ async function handleSignup(req, res) {
     });
   } catch (error) {
     console.error('Signup error', error);
-    return sendJson(res, 400, { message: error.message || 'Invalid request.' });
+    const status = typeof error.status === 'number' ? error.status : 500;
+    return sendJson(res, status, { message: error.message || 'Invalid request.' });
   }
 }
 
@@ -202,7 +222,8 @@ async function handleLogin(req, res) {
     });
   } catch (error) {
     console.error('Login error', error);
-    return sendJson(res, 400, { message: error.message || 'Invalid request.' });
+    const status = typeof error.status === 'number' ? error.status : 500;
+    return sendJson(res, status, { message: error.message || 'Invalid request.' });
   }
 }
 
