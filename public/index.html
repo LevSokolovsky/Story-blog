@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Story | Modern blogging playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="brand-panel">
+        <div class="logo">Story</div>
+        <p class="tagline">A calm home for your words. Sign up to begin your next chapter.</p>
+        <div class="floating-shapes">
+          <span class="bubble" aria-hidden="true"></span>
+          <span class="bubble" aria-hidden="true"></span>
+          <span class="bubble" aria-hidden="true"></span>
+        </div>
+      </aside>
+      <main class="content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="nav-trigger" id="navTrigger" aria-label="Open navigation">☰</button>
+            <span class="topbar-logo">Story</span>
+          </div>
+          <nav class="top-nav" id="topNav">
+            <button data-route="home" class="nav-link">Home</button>
+            <button data-route="explore" class="nav-link">Explore</button>
+            <button data-route="drafts" class="nav-link">Drafts</button>
+            <button data-route="profile" class="nav-link">Profile</button>
+          </nav>
+          <div class="auth-chip" id="authChip"></div>
+        </header>
+
+        <section id="view" class="view"></section>
+      </main>
+    </div>
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>
