@@ -1,4 +1,4 @@
-import { signup, login, guestLogin } from './api.js';
+import { signup, login, guestLogin, AuthUnavailableError } from './api.js';
 
 const view = document.getElementById('view');
 const appRoot = document.getElementById('app');
@@ -436,6 +436,13 @@ async function handleAuthSubmit(event, isSignup) {
     setState({ user: data.user, token: data.token, message: isSignup ? 'Welcome to Story!' : 'Logged in successfully.', messageType: 'success' });
     setRoute('home', { preserveMessage: true });
   } catch (error) {
+    if (error instanceof AuthUnavailableError) {
+      setState({
+        message: 'Accounts require the Story server. On static hosting (like Netlify previews), please use guest access.',
+        messageType: 'error',
+      });
+      return;
+    }
     setState({ message: error.message, messageType: 'error' });
   }
 }
