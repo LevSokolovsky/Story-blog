@@ -44,6 +44,78 @@ const sampleFollowedPosts = [
   },
 ];
 
+const demoStories = [
+  {
+    id: 'story-1',
+    title: 'Morning runs',
+    img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=160&q=80',
+  },
+  {
+    id: 'story-2',
+    title: 'Café notes',
+    img: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=160&q=80',
+  },
+  {
+    id: 'story-3',
+    title: 'Book club',
+    img: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=160&q=80',
+  },
+  {
+    id: 'story-4',
+    title: 'City snaps',
+    img: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=160&q=80',
+  },
+  {
+    id: 'story-5',
+    title: 'Weekend build',
+    img: 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=160&q=80',
+  },
+  {
+    id: 'story-6',
+    title: 'Sketchbook',
+    img: 'https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&fit=crop&w=160&q=80',
+  },
+];
+
+const demoPosts = [
+  {
+    id: 'demo-1',
+    title: 'A calm Sunday post: hiking above the city',
+    summary: 'Photo essay on finding quiet views after a busy week, with captions and a short route.',
+    author: 'Efrat Azulay',
+    tag: 'Lifestyle',
+    time: '4 min read',
+    image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=360&q=80',
+  },
+  {
+    id: 'demo-2',
+    title: 'One-pot pasta nights that save your energy',
+    summary: 'A breezy recipe breakdown with market swaps, plating tips, and a tiny shopping list.',
+    author: 'Nadav Klein',
+    tag: 'Food',
+    time: '3 min read',
+    image: 'https://images.unsplash.com/photo-1481399078051-3a0b5bf365ba?auto=format&fit=crop&w=360&q=80',
+  },
+  {
+    id: 'demo-3',
+    title: 'Sketching light: 10-minute prompts after work',
+    summary: 'Simple daily prompts with a quick photo of the finished sketch to keep the streak going.',
+    author: 'Adi Ben-Ami',
+    tag: 'Creativity',
+    time: '5 min read',
+    image: 'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=360&q=80',
+  },
+  {
+    id: 'demo-4',
+    title: 'Studio playlist for late-night writing',
+    summary: 'Curated tracks with short notes on mood, tempo, and the best scenes to pair with them.',
+    author: 'Lina Morales',
+    tag: 'Sound',
+    time: '6 min read',
+    image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=360&q=80',
+  },
+];
+
 const catImage = 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=900&q=80';
 const crashCat = 'https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=1200&q=80&sat=-40&blend=000&blend-mode=screen&exp=-12';
 let state = {
@@ -152,6 +224,28 @@ function renderPostCard(post) {
   `;
 }
 
+function renderDemoPost(post) {
+  return `
+    <article class="demo-card" aria-label="${post.title}">
+      <div class="demo-body">
+        <div class="demo-text">
+          <div class="demo-meta">
+            <span class="pill">${post.tag}</span>
+            <span class="helper-text">${post.time}</span>
+          </div>
+          <h3>${post.title}</h3>
+          <p class="helper-text">${post.summary}</p>
+          <div class="post-footer">
+            <span class="author">${post.author}</span>
+            <button class="link-btn" type="button">Read sample</button>
+          </div>
+        </div>
+        <img class="demo-thumb" src="${post.image}" alt="Preview for ${post.title}" />
+      </div>
+    </article>
+  `;
+}
+
 function renderHome() {
   if (state.user) {
     const hasFollowing = (state.following || []).length > 0;
@@ -212,7 +306,48 @@ function renderHome() {
     </div>
   `;
   document.getElementById('startWriting').onclick = () => setRoute('signup');
-  document.getElementById('readSamples').onclick = () => setRoute('login');
+  document.getElementById('readSamples').onclick = () => setRoute('demo');
+}
+
+function renderDemo() {
+  const stories = demoStories
+    .map(
+      (story) => `
+        <button class="story-chip" type="button" aria-label="${story.title}">
+          <span class="story-ring">
+            <img src="${story.img}" alt="${story.title}" />
+          </span>
+          <span class="story-label">${story.title}</span>
+        </button>
+      `
+    )
+    .join('');
+
+  view.innerHTML = `
+    <div class="demo-page">
+      <div class="section-header">
+        <div>
+          <p class="helper-text">See how Story feels in action</p>
+          <h2>Sample home feed</h2>
+          <p class="helper-text">Stacked posts with right-aligned images, short briefs, and titles—just like an Instagram-style scroll.</p>
+        </div>
+        <button class="secondary-btn" id="backHome" type="button">Back to home</button>
+      </div>
+
+      <div class="story-rail" aria-label="Sample stories">
+        ${stories}
+      </div>
+
+      <div class="demo-feed">
+        ${demoPosts.map(renderDemoPost).join('')}
+      </div>
+    </div>
+  `;
+
+  const backHome = document.getElementById('backHome');
+  if (backHome) {
+    backHome.onclick = () => setRoute('home');
+  }
 }
 
 function renderAuthForm(type) {
@@ -371,6 +506,9 @@ function render() {
       break;
     case 'signup':
       renderAuthForm('signup');
+      break;
+    case 'demo':
+      renderDemo();
       break;
     case 'explore':
       renderGuarded('Explore');

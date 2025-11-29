@@ -69,7 +69,10 @@ function verifyPassword(password, { salt, hash }) {
 }
 
 function generateId() {
-  return crypto.randomUUID();
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return crypto.randomBytes(16).toString('hex');
 }
 
 function signToken(payload) {
