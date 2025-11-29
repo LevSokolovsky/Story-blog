@@ -45,6 +45,7 @@ const sampleFollowedPosts = [
 ];
 
 const catImage = 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=900&q=80';
+const crashCat = 'https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=1200&q=80&sat=-40&blend=000&blend-mode=screen&exp=-12';
 const avatarChoices = [
   'https://api.dicebear.com/8.x/identicon/svg?seed=Story',
   'https://api.dicebear.com/8.x/shapes/svg?seed=Writer',
@@ -61,6 +62,8 @@ let state = {
   following: JSON.parse(localStorage.getItem('story_following') || '[]'),
 };
 
+let crashOverlayShown = false;
+
 function setState(updates) {
   state = { ...state, ...updates };
   if (updates.user !== undefined || updates.token !== undefined) {
@@ -75,17 +78,24 @@ function setState(updates) {
   if (updates.following !== undefined) {
     localStorage.setItem('story_following', JSON.stringify(state.following));
   }
-  render();
+  try {
+    render();
+  } catch (error) {
+    console.error('Render failed', error);
+    showCrashOverlay(error?.message || 'Something went wrong while updating the page.');
+  }
 }
 
-function setRoute(route) {
+function setRoute(route, options = {}) {
+  const { preserveMessage = false } = options;
   const needsAuth = restrictedRoutes.includes(route);
   if (needsAuth && !state.user) {
     setState({ route: 'home', message: 'Sign in to access writing areas like Explore and Drafts.', messageType: 'info' });
     window.history.pushState({ route: 'home' }, '', '#home');
     return;
   }
-  setState({ route, message: '' });
+  const updates = preserveMessage ? { route } : { route, message: '' };
+  setState(updates);
   window.history.pushState({ route }, '', `#${route}`);
 }
 
@@ -155,6 +165,7 @@ function renderHome() {
     const feed = hasFollowing ? sampleFollowedPosts : [];
     view.innerHTML = `
       <div class="feed">
+        ${state.message ? `<div class="${state.messageType === 'error' ? 'alert' : 'success'}">${state.message}</div>` : ''}
         <div class="section-header">
           <div>
             <p class="helper-text">Welcome back, ${state.user.name}.</p>
@@ -334,7 +345,7 @@ async function handleGuestLogin() {
   try {
     const data = await guestLogin();
     setState({ user: data.user, token: data.token, message: 'Signed in as guest.', messageType: 'success' });
-    setRoute('home');
+    setRoute('home', { preserveMessage: true });
   } catch (error) {
     setState({ message: error.message, messageType: 'error' });
   }
@@ -362,10 +373,38 @@ async function handleAuthSubmit(event, isSignup) {
       avatar: payload.avatar,
     });
     setState({ user: data.user, token: data.token, message: isSignup ? 'Welcome to Story!' : 'Logged in successfully.', messageType: 'success' });
-    setRoute('home');
+    setRoute('home', { preserveMessage: true });
   } catch (error) {
     setState({ message: error.message, messageType: 'error' });
   }
+}
+
+function showCrashOverlay(reason) {
+  if (crashOverlayShown) return;
+  crashOverlayShown = true;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'crash-overlay';
+  overlay.innerHTML = `
+    <div class="crash-card">
+      <p class="pill">😿 Story hit a snag</p>
+      <h2>Our cringe cat tripped over this page.</h2>
+      <p class="helper-text">${reason || 'Something went wrong loading Story. Please try again.'}</p>
+      <img src="${crashCat}" alt="Cat with a dramatic face" />
+      <div class="actions">
+        <button class="primary-btn" id="crashHome">Return home</button>
+        <button class="secondary-btn" id="crashReload">Reload</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#crashHome').onclick = () => {
+    window.location.hash = '#home';
+    window.location.reload();
+  };
+  overlay.querySelector('#crashReload').onclick = () => window.location.reload();
 }
 
 function renderGuarded(title) {
@@ -423,3 +462,12 @@ function render() {
 
 const initialRoute = window.location.hash.replace('#', '') || 'home';
 setState({ route: initialRoute });
+
+window.addEventListener('error', (event) => {
+  showCrashOverlay(event?.error?.message || event?.message || 'A page error occurred.');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const message = event?.reason?.message || event?.reason || 'A network request failed in an unexpected way.';
+  showCrashOverlay(message);
+});

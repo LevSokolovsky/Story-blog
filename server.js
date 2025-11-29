@@ -122,8 +122,42 @@ function sendJson(res, status, payload) {
 function serveStatic(res, filePath) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not Found');
+      const escapedPath = String(filePath || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const catUrl =
+        'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=1200&q=80&sat=-30&blend=000&sat=-15&exp=-10&blend-mode=soft-light';
+      const html = `<!doctype html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Story | 404</title>
+            <style>
+              body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #f6fbff; color: #0b2b36; display: grid; place-items: center; min-height: 100vh; padding: 32px; }
+              .card { max-width: 640px; width: 100%; background: #ffffff; border-radius: 18px; padding: 28px; box-shadow: 0 18px 60px rgba(5, 67, 96, 0.12); border: 1px solid rgba(11, 43, 54, 0.08); display: grid; gap: 14px; text-align: center; }
+              img { max-width: 100%; border-radius: 16px; border: 1px solid rgba(11, 43, 54, 0.08); box-shadow: 0 12px 42px rgba(5, 67, 96, 0.1); }
+              .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(115, 188, 231, 0.16); color: #0b2b36; font-weight: 700; }
+              .pill span { font-weight: 600; color: #5e7b89; }
+              .path { color: #5e7b89; font-size: 14px; }
+              .actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+              .button { padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(78, 198, 162, 0.4); background: linear-gradient(120deg, #4ec6a2, #73bce7); color: #0b2b36; font-weight: 700; text-decoration: none; box-shadow: 0 12px 34px rgba(115, 188, 231, 0.35); }
+              .ghost { border-color: rgba(11, 43, 54, 0.12); background: #ffffff; box-shadow: none; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="pill">😿 Lost page <span>We couldn't open ${escapedPath || 'that path'}.</span></div>
+              <h1>Our cringe cat knocked this page offline.</h1>
+              <p class="path">The link you followed doesn't exist. Let's get you back to writing.</p>
+              <img src="${catUrl}" alt="Sleepy cat illustration" />
+              <div class="actions">
+                <a class="button" href="/#home">Return home</a>
+                <a class="button ghost" href="/">Reload Story</a>
+              </div>
+            </div>
+          </body>
+        </html>`;
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
       return;
     }
     const ext = path.extname(filePath);
