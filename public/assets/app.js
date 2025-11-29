@@ -46,13 +46,6 @@ const sampleFollowedPosts = [
 
 const catImage = 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=900&q=80';
 const crashCat = 'https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=1200&q=80&sat=-40&blend=000&blend-mode=screen&exp=-12';
-const avatarChoices = [
-  'https://api.dicebear.com/8.x/identicon/svg?seed=Story',
-  'https://api.dicebear.com/8.x/shapes/svg?seed=Writer',
-  'https://api.dicebear.com/8.x/thumbs/svg?seed=Dreamer',
-  'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=Inkling',
-];
-
 let state = {
   user: JSON.parse(localStorage.getItem('story_user') || 'null'),
   token: localStorage.getItem('story_token'),
@@ -226,119 +219,54 @@ function renderAuthForm(type) {
   const isSignup = type === 'signup';
   const title = isSignup ? 'Create your Story account' : 'Welcome back';
   const submitLabel = isSignup ? 'Sign up securely' : 'Log in';
-  const avatarSection = isSignup
-    ? `<div class="card">
-        <div class="section-header">
-          <h3>Choose an avatar</h3>
-          <p class="helper-text">Pick a ready-made avatar, paste a link, or upload a photo from your device.</p>
-        </div>
-        <div class="upload-block">
-          <label class="file-label">
-            Upload from your device
-            <input class="input" type="file" id="avatarFile" accept="image/*" />
-          </label>
-          <p class="helper-text" id="avatarHint">Images under 500KB keep things speedy.</p>
-          <div id="avatarPreview" class="avatar-preview muted-panel">No image selected yet.</div>
-        </div>
-        <div class="avatar-grid" id="avatarGrid"></div>
-        <div class="form-grid">
-          <label for="avatarUrl">Image link or uploaded image</label>
-          <input class="input" id="avatarUrl" name="avatar" placeholder="https://..." />
-        </div>
-      </div>`
-    : '';
+  const passwordAutocomplete = isSignup ? 'new-password' : 'current-password';
+  const highlights = isSignup
+    ? `<ul class="benefits-list">
+        <li>Keep drafts and published posts together in one place.</li>
+        <li>Pick up writing on any device without losing context.</li>
+        <li>Share links confidently with a clean, distraction-free reader.</li>
+      </ul>`
+    : `<ul class="benefits-list">
+        <li>Return to your saved drafts and keep your streak going.</li>
+        <li>Browse writers you follow for quick inspiration.</li>
+        <li>Switch devices without re-entering your credentials.</li>
+      </ul>`;
 
   view.innerHTML = `
-    <div class="form-grid">
-      <div>
+    <div class="auth-layout">
+      <div class="card auth-panel">
         <div class="section-header">
           <h2>${title}</h2>
           <p class="helper-text">${isSignup ? 'Build your profile with a few details' : 'Authenticate to continue writing'}</p>
         </div>
         ${state.message ? `<div class="${state.messageType === 'error' ? 'alert' : 'success'}">${state.message}</div>` : ''}
-        <form id="authForm" class="form-grid">
-          ${isSignup ? '<label>Full name<input class="input" required name="name" placeholder="Alex Writer" /></label>' : ''}
-          <label>Email<input class="input" required type="email" name="email" placeholder="you@story.app" /></label>
-          <label>Password<input class="input" required type="password" name="password" placeholder="••••••••" /></label>
-          ${isSignup ? '<label>Confirm password<input class="input" required type="password" name="confirm" placeholder="Repeat password" /></label>' : ''}
-          <button type="submit" class="primary-btn">${submitLabel}</button>
-          <button type="button" class="secondary-btn" id="guestBtn">Continue as guest</button>
-          <p class="helper-text">
+        <form id="authForm" class="form-stack">
+          ${isSignup ? '<label>Full name<input class="input" required name="name" placeholder="Alex Writer" autocomplete="name" /></label>' : ''}
+          <label>Email<input class="input" required type="email" name="email" placeholder="you@story.app" autocomplete="email" /></label>
+          <label>Password<input class="input" required type="password" name="password" placeholder="••••••••" autocomplete="${passwordAutocomplete}" /></label>
+          ${isSignup ? '<label>Confirm password<input class="input" required type="password" name="confirm" placeholder="Repeat password" autocomplete="new-password" /></label>' : ''}
+          <div class="form-actions">
+            <button type="submit" class="primary-btn">${submitLabel}</button>
+            <button type="button" class="secondary-btn" id="guestBtn">Continue as guest</button>
+          </div>
+          <p class="helper-text switcher">
             ${isSignup ? 'Already have an account? ' : "Don't have an account? "}
             <button type="button" class="link-btn" id="switchAuth">${isSignup ? 'Log in' : 'Create one'}</button>
           </p>
         </form>
       </div>
-      ${avatarSection}
+      <div class="card auth-side">
+        <p class="pill">Friendly onboarding</p>
+        <h3>${isSignup ? 'Set up once, write often' : 'Welcome back to Story'}</h3>
+        <p class="helper-text">No profile photos needed—just the essentials to start writing and exploring.</p>
+        ${highlights}
+      </div>
     </div>
   `;
-
-  if (isSignup) {
-    const grid = document.getElementById('avatarGrid');
-    avatarChoices.forEach((src, index) => {
-      const option = document.createElement('button');
-      option.type = 'button';
-      option.className = 'avatar-option';
-      option.innerHTML = `<img src="${src}" alt="avatar ${index + 1}" /><span class="helper-text">${index === 0 ? 'Fresh' : index === 1 ? 'Bold' : index === 2 ? 'Playful' : 'Calm'}</span>`;
-      option.addEventListener('click', () => {
-        document.querySelectorAll('.avatar-option').forEach((el) => el.classList.remove('selected'));
-        option.classList.add('selected');
-        document.getElementById('avatarUrl').value = src;
-      });
-      grid.appendChild(option);
-    });
-
-    bindAvatarTools();
-  }
 
   document.getElementById('switchAuth').onclick = () => setRoute(isSignup ? 'login' : 'signup');
   document.getElementById('guestBtn').onclick = handleGuestLogin;
   document.getElementById('authForm').onsubmit = (event) => handleAuthSubmit(event, isSignup);
-}
-
-function bindAvatarTools() {
-  const avatarUrlInput = document.getElementById('avatarUrl');
-  const avatarPreview = document.getElementById('avatarPreview');
-  const avatarFile = document.getElementById('avatarFile');
-  const avatarHint = document.getElementById('avatarHint');
-
-  const updatePreview = (value) => {
-    if (!avatarPreview) return;
-    if (value) {
-      avatarPreview.innerHTML = `<img src="${value}" alt="Avatar preview" />`;
-    } else {
-      avatarPreview.textContent = 'No image selected yet.';
-    }
-  };
-
-  avatarUrlInput?.addEventListener('input', () => updatePreview(avatarUrlInput.value.trim()));
-
-  avatarFile?.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setState({ message: 'Please upload an image file.', messageType: 'error' });
-      event.target.value = '';
-      return;
-    }
-    if (file.size > 500 * 1024) {
-      setState({ message: 'Please choose an image under 500KB.', messageType: 'error' });
-      event.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      avatarUrlInput.value = reader.result;
-      updatePreview(reader.result);
-      if (avatarHint) {
-        avatarHint.textContent = 'Uploaded securely from your device.';
-      }
-    };
-    reader.readAsDataURL(file);
-  });
-
-  updatePreview(avatarUrlInput?.value);
 }
 
 async function handleGuestLogin() {
@@ -364,13 +292,11 @@ async function handleAuthSubmit(event, isSignup) {
   try {
     payload.name = (payload.name || '').trim();
     payload.email = (payload.email || '').trim();
-    payload.avatar = (payload.avatar || '').trim();
     const apiCall = isSignup ? signup : login;
     const data = await apiCall({
       name: payload.name,
       email: payload.email,
       password: payload.password,
-      avatar: payload.avatar,
     });
     setState({ user: data.user, token: data.token, message: isSignup ? 'Welcome to Story!' : 'Logged in successfully.', messageType: 'success' });
     setRoute('home', { preserveMessage: true });

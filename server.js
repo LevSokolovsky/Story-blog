@@ -169,10 +169,9 @@ function serveStatic(res, filePath) {
 
 async function handleSignup(req, res) {
   try {
-    const { name, email, password, avatar } = await parseBody(req);
+    const { name, email, password } = await parseBody(req);
     const safeEmail = String(email || '').toLowerCase().trim();
     const safeName = String(name || '').trim();
-    const safeAvatar = typeof avatar === 'string' ? avatar.trim() : '';
 
     if (!safeName || !safeEmail || !password) {
       return sendJson(res, 400, { message: 'Name, email, and password are required.' });
@@ -190,21 +189,6 @@ async function handleSignup(req, res) {
       return sendJson(res, 400, { message: 'Password must be between 8 and 128 characters.' });
     }
 
-    if (safeAvatar && safeAvatar.length > 500000) {
-      return sendJson(res, 413, { message: 'Avatar is too large. Please upload an image under 500KB.' });
-    }
-
-    if (
-      safeAvatar &&
-      !safeAvatar.startsWith('http') &&
-      !safeAvatar.startsWith('data:image/png;base64,') &&
-      !safeAvatar.startsWith('data:image/jpeg;base64,') &&
-      !safeAvatar.startsWith('data:image/jpg;base64,') &&
-      !safeAvatar.startsWith('data:image/webp;base64,')
-    ) {
-      return sendJson(res, 400, { message: 'Avatar must be a valid image URL or data URL.' });
-    }
-
     const users = loadUsers();
     if (users.some((u) => u.email === safeEmail)) {
       return sendJson(res, 409, { message: 'An account with this email already exists.' });
@@ -219,7 +203,6 @@ async function handleSignup(req, res) {
       id: generateId(),
       name: safeName,
       email: safeEmail,
-      avatar: safeAvatar,
       password: passwordRecord,
       createdAt: new Date().toISOString(),
     };
@@ -228,7 +211,7 @@ async function handleSignup(req, res) {
     const token = signToken({ sub: newUser.id, email: safeEmail, exp: Date.now() + 1000 * 60 * 60 * 24 * 7 });
     return sendJson(res, 201, {
       token,
-      user: { id: newUser.id, name: newUser.name, email: newUser.email, avatar: newUser.avatar },
+      user: { id: newUser.id, name: newUser.name, email: newUser.email },
     });
   } catch (error) {
     console.error('Signup error', error);

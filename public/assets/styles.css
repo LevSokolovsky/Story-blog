@@ -267,6 +267,41 @@ body {
   color: var(--muted);
 }
 
+.auth-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-side {
+  display: grid;
+  gap: 10px;
+}
+
+.form-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.switcher {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .input,
 .selectable {
   width: 100%;
@@ -282,69 +317,6 @@ body {
   outline: none;
   border-color: rgba(115, 188, 231, 0.8);
   box-shadow: 0 0 0 4px rgba(115, 188, 231, 0.16);
-}
-
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  gap: 12px;
-}
-
-.avatar-option {
-  border: 2px solid transparent;
-  border-radius: 14px;
-  padding: 8px;
-  cursor: pointer;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.avatar-option:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(5, 67, 96, 0.1);
-}
-
-.avatar-option.selected {
-  border-color: rgba(78, 198, 162, 0.9);
-  box-shadow: 0 10px 30px rgba(78, 198, 162, 0.25);
-}
-
-.avatar-option img {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.avatar-preview img {
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
-  object-fit: cover;
-}
-
-.avatar-preview {
-  min-height: 90px;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  border-radius: 12px;
-  border: 1px dashed var(--border);
-}
-
-.upload-block {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.file-label {
-  font-weight: 700;
-  color: var(--ink);
 }
 
 .helper-text {
