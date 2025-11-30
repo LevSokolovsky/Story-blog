@@ -1,46 +1,92 @@
 <!doctype html>
-<html lang="en">
+<html lang="he" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Story | Modern blogging playground</title>
+    <title>המוהנדס | בלוג בעברית</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/assets/styles.css" />
   </head>
   <body>
-    <div id="app">
+    <div class="layout">
       <aside class="brand-panel">
-        <div class="logo">Story</div>
-        <p class="tagline">Write boldly, publish beautifully, and keep your ideas close. Story helps you grow a writing habit that travels with you.</p>
-        <div class="floating-shapes">
-          <span class="bubble" aria-hidden="true"></span>
-          <span class="bubble" aria-hidden="true"></span>
-          <span class="bubble" aria-hidden="true"></span>
+        <div class="logo">המוהנדס</div>
+        <p class="tagline">
+          בלוג יומי שמחפש מה אפשר לבנות, ללמוד ולהרוויח בעולם ה-AI. כתוב בעברית, בנוי מימין
+          לשמאל, ומזמין אתכם להצטרף למסע.
+        </p>
+        <div class="floating-shapes" aria-hidden="true">
+          <span class="bubble"></span>
+          <span class="bubble"></span>
+          <span class="bubble"></span>
         </div>
       </aside>
+
       <main class="content">
         <header class="topbar">
           <div class="topbar-left">
-            <button class="nav-trigger" id="navTrigger" aria-label="Open navigation">☰</button>
-            <span class="topbar-logo">Story</span>
+            <span class="topbar-logo">המוהנדס</span>
+            <nav class="top-nav">
+              <a class="nav-link" href="#home">דף הבית</a>
+              <a class="nav-link" href="#index">אינדקס</a>
+              <a class="nav-link" href="#about">אודות</a>
+              <a class="nav-link" href="#contact">צרו קשר</a>
+            </nav>
           </div>
-          <nav class="top-nav" id="topNav">
-            <button data-route="home" class="nav-link">Home</button>
-            <button data-route="explore" class="nav-link">Explore</button>
-            <button data-route="drafts" class="nav-link">Drafts</button>
-            <button data-route="profile" class="nav-link">Profile</button>
-          </nav>
-          <div class="auth-chip" id="authChip"></div>
         </header>
 
-        <section id="view" class="view"></section>
+        <section id="home" class="panel hero">
+          <p class="eyebrow">ברוכים הבאים</p>
+          <h1>
+            ברוכים הבאים למסע של המהונדס אני הולך לנסות לנצל את התקופה שלי בתור סטודנט שאוהב כסף
+            ורוצה חיים יותר כלים, לבדוק מה עולם הai שווה היום. המטרה האם אני יכול להגיע לחופש
+            כלכלי? האם אצליח לא להיות תלוי באף אחד בזמן הלימודים? ואיך בכלל אני אלמד ואשתפר בכל
+            יום? עולם הai עם המהוהנדס מתחלים!
+          </h1>
+          <p class="supporting">
+            כל פוסט חדש יתעדכן כאן, ויחקור עוד דרך פשוטה להפוך רעיונות ו-AI לכלים אמיתיים.
+          </p>
+        </section>
+
+        <section id="index" class="panel">
+          <h2>אינדקס</h2>
+          <p class="muted">המדף עדיין ריק. פוסטים חדשים יעלו בקרוב – תישארו קרובים.</p>
+        </section>
+
+        <section id="about" class="panel about">
+          <div class="about-text">
+            <h2>אודות</h2>
+            <p class="muted">בבנייה. עוד רגע תכירו אותי ואת הדרך שלי, מבטיח שיהיה שווה לחכות.</p>
+          </div>
+          <div class="about-image">
+            <img
+              src="https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=900&q=80"
+              alt="חתול די ג'יי עם משקפי שמש באווירה טובה"
+            />
+            <span class="image-caption">בינתיים, חתול די ג'יי יוצר וייב נכון.</span>
+          </div>
+        </section>
+
+        <section id="contact" class="panel contact">
+          <div>
+            <h2>צרו קשר</h2>
+            <p class="supporting">
+              רוצים לדבר, לשאול שאלה, להציע שיתוף פעולה או פשוט להגיד שלום? אני כאן ומקשיב.
+            </p>
+          </div>
+          <ul class="contact-list">
+            <li><a href="https://www.tiktok.com/@hamohandes" target="_blank">טיקטוק</a></li>
+            <li><a href="https://www.instagram.com/hamohandes" target="_blank">אינסטגרם</a></li>
+            <li><a href="https://www.youtube.com/@hamohandes" target="_blank">יוטיוב</a></li>
+            <li><a href="mailto:hello@hamohandes.com">hello@hamohandes.com</a></li>
+          </ul>
+        </section>
       </main>
     </div>
-    <script type="module" src="/assets/app.js"></script>
   </body>
 </html>
